@@ -60,8 +60,8 @@ public abstract class MyDvcsStatusWidget<T extends Repository> extends EditorBas
     }
   }
 
-  @Override
-  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
+  @Nullable
+  public WidgetPresentation getPresentation() {
     return this;
   }
 

@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'Git Scope'
-version '3.0.2'
+version '3.0.3'
 
 sourceCompatibility = 8
 
@@ -26,13 +26,19 @@ intellij {
 }
 
 patchPluginXml {
-    sinceBuild '193'
-    untilBuild '202'
+    sinceBuild '194'
+    untilBuild '999'
     changeNotes """
-        <h2>Bugfixes</h2>
+        <h2>Make available for current and future versions</h2>
         <ul>
             <li>
-                Fix Bug where Diff-Window shows only the loader icon
+                Set sinceBuild to 194
+            </li>
+            <li>
+                Set untilBuild to 999
+            </li>
+            <li>
+                Fix deprecation warning for StatusBarWidget
             </li>
         </ul>
     """
