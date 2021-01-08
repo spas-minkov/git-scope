@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'Git Scope'
-version '3.0.3'
+version '3.0.4'
 
 sourceCompatibility = 8
 
@@ -17,22 +17,27 @@ dependencies {
     // https://mvnrepository.com/artifact/com.intellij/openapi
 }
 
-//apply plugin: 'org.jetbrains.intellij'
+// Setup:
+// JDK: /snap/phpstorm/current/jbr
+// SDK: Add PHPStorm manually
 
 intellij {
     version 'LATEST-EAP-SNAPSHOT'
-    // version '2019.3.3'
+    // version '2020.3.1'
     plugins 'git4idea'
+
+    // Run with PHPStorm
+    // alternativeIdePath '/snap/phpstorm/current'
 }
 
 patchPluginXml {
-    sinceBuild '194'
+    sinceBuild '203'
     untilBuild '999'
     changeNotes """
         <h2>Make available for current and future versions</h2>
         <ul>
             <li>
-                Set sinceBuild to 194
+                Set sinceBuild to 203 (fixes java.lang.NoSuchFieldError)
             </li>
             <li>
                 Set untilBuild to 999
@@ -44,5 +49,5 @@ patchPluginXml {
     """
 }
 publishPlugin {
-    token intellijPublishToken
+    token findProperty('intellijPublishToken') ?: 'no_token_given'
 }
