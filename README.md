@@ -1,4 +1,4 @@
-# GIT SCOPE
+# GIT SCOPE (Intellij Plugin)
 Provides a tool window and a status bar widget to select a target branch called **GIT SCOPE**
 ![](docs/01_toolwindow.png)
 # Story
