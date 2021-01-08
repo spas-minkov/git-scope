@@ -76,6 +76,12 @@ class MyGitBranchPopupActions {
       popupGroup.addAll(toInsert);
     }
 
+    CustomBranchAction customBranchAction = new CustomBranchAction(myProject, repositoryList, "Custom...", myRepository, LOCAL);
+    popupGroup.add(customBranchAction);
+
+    TargetBranchAction targetBranchActionTest = new TargetBranchAction(myProject, repositoryList, "HEAD~1", myRepository, LOCAL);
+    popupGroup.add(targetBranchActionTest);
+
     TargetBranchAction targetBranchActionHead = new TargetBranchAction(myProject, repositoryList, Git.BRANCH_HEAD, myRepository, LOCAL);
     popupGroup.add(targetBranchActionHead);
 
@@ -208,6 +214,81 @@ class MyGitBranchPopupActions {
 
       Manager manager = ServiceManager.getService(myProject, Manager.class);
       manager.targetBranchListener(this);
+
+    }
+
+    public Boolean getHide() {
+      return hide;
+    }
+
+    public void setHide(Boolean hide) {
+      this.hide = hide;
+    }
+
+  }
+
+  public static class CustomBranchAction extends MyBranchAction {
+
+  private final GitBranchManager gitBranchManager;
+  private final ImmutableList<? extends GitRepository> myRepositories;
+  private final GitRepository mySelectedRepository;
+  private final Project myProject;
+  private Boolean hide = false;
+
+  CustomBranchAction(
+          @NotNull Project project,
+          @NotNull List<? extends GitRepository> repositories,
+          @NotNull String branchName,
+          @NotNull GitRepository repo,
+          GitBranchType gitBranchType
+  ) {
+      super(repo, branchName);
+
+      myProject = project;
+      myRepositories = ContainerUtil.immutableList(repositories);
+      //    myBranchName = branchName;
+      mySelectedRepository = repo;
+      gitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
+
+      setFavorite(gitBranchManager.isFavorite(gitBranchType, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
+
+    }
+
+    public String getBranchName() {
+      return "HEAD~1";
+    }
+    //    public String getRepoName() {
+    //      return "HEAD";
+    //    }
+
+    @Nullable
+    private GitRepository chooseRepo() {
+      return myRepositories.size() > 1 ? null : mySelectedRepository;
+    }
+
+    @Override
+    public void toggle() {
+      super.toggle();
+      gitBranchManager.setFavorite(LOCAL, chooseRepo(), myBranchName, isFavorite());
+    }
+
+    public void update(@NotNull AnActionEvent e) {
+
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+
+      //      try {
+      //        Thread.sleep(200);
+      //      } catch (InterruptedException ex) {
+      //        ex.printStackTrace();
+      //      }
+
+      System.out.println("here");
+      Manager manager = ServiceManager.getService(myProject, Manager.class);
+      manager.targetBranchListener(this);
+      System.out.println("here2");
 
     }
 

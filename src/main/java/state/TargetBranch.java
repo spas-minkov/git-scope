@@ -130,6 +130,9 @@ public class TargetBranch {
 
     public void targetBranchListener(MyBranchAction myBranchAction, Consumer<Void> callback) {
 
+        System.out.println("!" + myBranchAction.getBranchName());
+        System.out.println("!" + myBranchAction.getRepoName());
+
         if (myBranchAction.getBranchName().equals(Git.BRANCH_HEAD)) {
             setFeatureActive(false);
             callback.accept(null);
