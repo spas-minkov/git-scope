@@ -34,3 +34,9 @@ READ: https://www.jetbrains.com/help/phpstorm/scopes.html
 | Ctrl+D (on any file in the changes browser) | Open diff window  
 | F7 | step forward (in diff window)
 | Shift+F7 | step backward (in diff window)
+
+# Support
+
+Fell free to fork and create pull requests or Donate.
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?hosted_button_id=PMWP69QKJGWFC)
