@@ -14,10 +14,12 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.openapi.vcs.ui.PopupListElementRendererWithIcon;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.KeepingPopupOpenAction;
@@ -27,6 +29,8 @@ import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,15 +42,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.icons.AllIcons.General.FitContent;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
-/**
- * This class was copied from origin BranchActionGroupPopup
- */
 public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
-    static final String BRANCH_POPUP = "BranchWidget";
+    static final String BRANCH_POPUP = "MyBranchWidget";
+    private static final int BRANCH_POPUP_ROW_COUNT = 30;
     private Project myProject;
     private MyPopupListElementRenderer myListElementRenderer;
     private boolean myShown;
@@ -59,28 +62,31 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     private final List<AnAction> mySettingsActions = new ArrayList<>();
     private final List<AnAction> myToolbarActions = new ArrayList<>();
 
-    public BranchActionGroupPopup(@NotNull String title,
+    public BranchActionGroupPopup(@NotNull @NlsContexts.PopupTitle String title,
                                   @NotNull Project project,
                                   @NotNull Condition<? super AnAction> preselectActionCondition,
                                   @NotNull ActionGroup actions,
                                   @Nullable String dimensionKey) {
-        super(title, createBranchSpeedSearchActionGroup(actions), SimpleDataContext.getProjectContext(project),
+        super(title, createBranchSpeedSearchActionGroup(actions), SimpleDataContext.builder()
+                        .add(CommonDataKeys.PROJECT, project)
+                        .add(PlatformDataKeys.CONTEXT_COMPONENT, IdeFocusManager.getInstance(project).getFocusOwner())
+                        .build(),
                 preselectActionCondition, true);
         getTitle().setBackground(JBColor.PanelBackground);
         myProject = project;
         DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
         myKey = dimensionKey;
         if (myKey != null) {
-            Dimension storedSize = WindowStateService.getInstance(myProject).getSizeFor(myProject, myKey);
-            if (storedSize != null) {
-                //set forced size before component is shown
-                setSize(storedSize);
+            setDimensionServiceKey(myKey);
+            if (WindowStateService.getInstance(myProject).getSizeFor(myProject, myKey) != null) {
                 myUserSizeChanged = true;
             }
             createTitlePanelToolbar(myKey);
         }
-        // setSpeedSearchAlwaysShown(true);
+        // setSpeedSearchAlwaysShown();
         myMeanRowHeight = getList().getCellBounds(0, 0).height + UIUtil.getListCellVPadding() * 2;
+        setMaxRowCount(BRANCH_POPUP_ROW_COUNT);
+        getList().setVisibleRowCount(BRANCH_POPUP_ROW_COUNT);
     }
 
     private void createTitlePanelToolbar(@NotNull String dimensionKey) {
@@ -91,7 +97,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
             }
         };
 //        AnAction restoreSizeButton =
-//                new AnAction(DvcsBundle.lazyMessage("action.MyAbstractBranchActionGroupPopup.Anonymous.text.restore.size"), CollapseComponentHover) {
+//                new AnAction(DvcsBundle.messagePointer("action.BranchActionGroupPopup.Anonymous.text.restore.size"), FitContent) {
 //                    @Override
 //                    public void actionPerformed(@NotNull AnActionEvent e) {
 //                        WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, null);
@@ -104,7 +110,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 //                        e.getPresentation().setEnabled(myUserSizeChanged);
 //                    }
 //                };
-        ActionGroup settingsGroup = new ActionGroup("Settings", true) {
+        ActionGroup settingsGroup = new ActionGroup(DvcsBundle.message("action.BranchActionGroupPopup.settings.text"), true) {
             @Override
             public AnAction[] getChildren(@Nullable AnActionEvent e) {
                 return mySettingsActions.toArray(AnAction.EMPTY_ARRAY);
@@ -117,7 +123,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         };
         settingsGroup.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
 
-//        myToolbarActions.add(restoreSizeButton);
+        // myToolbarActions.add(restoreSizeButton);
         myToolbarActions.add(settingsGroup);
 
         ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(BRANCH_POPUP, actionGroup, true);
@@ -152,15 +158,19 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
             }
         };
         popupWindow.addComponentListener(windowListener);
-        addPopupListener(new JBPopupListener() {
+        addListener(new JBPopupListener() {
             @Override
             public void onClosed(@NotNull LightweightWindowEvent event) {
                 popupWindow.removeComponentListener(windowListener);
-                if (dimensionKey != null && myUserSizeChanged) {
-                    WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, myPrevSize);
-                }
             }
         });
+    }
+
+    @Override
+    public void storeDimensionSize() {
+        if (myKey != null && myUserSizeChanged) {
+            super.storeDimensionSize();
+        }
     }
 
     private void processOnSizeChanged() {
@@ -355,7 +365,16 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
         @Override
         protected SeparatorWithText createSeparator() {
-            return new MyTextSeparator();
+            SeparatorWithText separator = super.createSeparator();
+            separator.setTextForeground(UIUtil.getListForeground());
+            separator.setCaptionCentered(false);
+            UIUtil.addInsets(separator, DEFAULT_VGAP, UIUtil.getListCellHPadding(), 0, 0);
+            return separator;
+        }
+
+        @Override
+        protected void setSeparatorFont(Font font) {
+            super.setSeparatorFont(RelativeFont.BOLD.derive(font));
         }
 
         @Override
@@ -365,6 +384,10 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
                 myTextLabel.setForeground(JBColor.gray);
             }
             super.customizeComponent(list, value, isSelected);
+            if (mySeparatorComponent.isVisible()) {
+                ((GroupHeaderSeparator)mySeparatorComponent).setHideLine(myCurrentIndex == 0 || StringUtil.isNotEmpty(mySeparatorComponent.getCaption()));
+            }
+
             CustomIconProvider actionWithIconProvider = getSpecificAction(value, CustomIconProvider.class);
             if (actionWithIconProvider != null) {
                 myTextLabel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
@@ -374,7 +397,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
             updateInfoComponent(myInfoLabel, additionalInfoAction != null ? additionalInfoAction.getInfoText() : null, isSelected);
         }
 
-        private void updateInfoComponent(@NotNull ErrorLabel infoLabel, @Nullable String infoText, boolean isSelected) {
+        private void updateInfoComponent(@NotNull ErrorLabel infoLabel, @Nullable @Nls String infoText, boolean isSelected) {
             if (infoText != null) {
                 infoLabel.setVisible(true);
                 infoLabel.setText(infoText);
@@ -417,35 +440,18 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         }
     }
 
-    private static class MyTextSeparator extends SeparatorWithText {
-
-        MyTextSeparator() {
-            super();
-            setTextForeground(UIUtil.getListForeground());
-            setCaptionCentered(false);
-            UIUtil.addInsets(this, DEFAULT_VGAP, UIUtil.getListCellHPadding(), 0, 0);
-        }
-
-        @Override
-        protected void paintLine(Graphics g, int x, int y, int width) {
-            if (StringUtil.isEmptyOrSpaces(getCaption())) {
-                super.paintLine(g, x, y, width);
-            }
-        }
-    }
-
     private static class MoreAction extends DumbAwareAction implements KeepingPopupOpenAction {
 
         @NotNull private final Project myProject;
-        @Nullable private final String mySettingName;
+        @Nullable private final @NonNls String mySettingName;
         private final boolean myDefaultExpandValue;
         private boolean myIsExpanded;
-        @NotNull private final String myToCollapseText;
-        @NotNull private final String myToExpandText;
+        @NotNull private final @Nls String myToCollapseText;
+        @NotNull private final @Nls String myToExpandText;
 
         MoreAction(@NotNull Project project,
                    int numberOfHiddenNodes,
-                   @Nullable String settingName,
+                   @Nullable @NonNls String settingName,
                    boolean defaultExpandValue,
                    boolean hasFavorites) {
             super();
@@ -496,7 +502,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         boolean shouldBeShown();
     }
 
-    private static class HideableActionGroup extends EmptyAction.MyDelegatingActionGroup implements MoreHideableActionGroup, DumbAware {
+    private static final class HideableActionGroup extends EmptyAction.MyDelegatingActionGroup implements MoreHideableActionGroup, DumbAware {
         @NotNull private final MoreAction myMoreAction;
 
         private HideableActionGroup(@NotNull ActionGroup actionGroup, @NotNull MoreAction moreAction) {

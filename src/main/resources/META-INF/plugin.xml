@@ -11,7 +11,7 @@
     <vendor>Michael Wölk</vendor>
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
-    <idea-version since-build="194"/>
+    <idea-version since-build="202"/>
 
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
@@ -34,7 +34,6 @@
     <extensions defaultExtensionNs="com.intellij">
 
         <!-- Tool window -->
-<!--        <toolWindow id="Git Scope" secondary="true" anchor="right" factoryClass="myToolWindow.MyToolWindowFactory"/>-->
         <toolWindow id="Git Scope" secondary="true" anchor="right" factoryClass="ui.ToolWindowUIFactory"/>
 
         <!-- Config (Persistent) -->
