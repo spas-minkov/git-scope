@@ -9,7 +9,6 @@ public class MyProjectManagerListener implements ProjectManagerListener {
 
     public void projectOpened(Project project) {
 
-        //Manager manager = new Manager();
         Manager manager = ServiceManager.getService(project, Manager.class);
         manager.init(project);
 

@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'Git Scope'
-version '3.0.4'
+version '3.0.5'
 
 sourceCompatibility = 8
 
@@ -32,16 +32,10 @@ patchPluginXml {
     sinceBuild '203'
     untilBuild '999'
     changeNotes """
-        <h2>Make available for current and future versions</h2>
+        <h2>Fixed</h2>
         <ul>
             <li>
-                Set sinceBuild to 203 (fixes java.lang.NoSuchFieldError)
-            </li>
-            <li>
-                Set untilBuild to 999
-            </li>
-            <li>
-                Fix deprecation warning for StatusBarWidget
+                Avoid exception on click on branch drop down
             </li>
         </ul>
     """
